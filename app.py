@@ -2,6 +2,14 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
 import numpy as np
+from prometheus_fastapi_instrumentator import Instrumentator
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler()]
+)
 
 # Load model
 model = joblib.load("titanic_model.pkl")
@@ -10,13 +18,12 @@ model = joblib.load("titanic_model.pkl")
 class Passenger(BaseModel):
     Pclass: int
     Age: float
-    # SibSp: int
-    # Parch: int
     Fare: float
     Sex: int      # 0 = female, 1 = male
     Embarked: int # 0 = C, 1 = Q, 2 = S
 
 app = FastAPI(title="Titanic Survival Prediction API")
+Instrumentator().instrument(app).expose(app)
 
 @app.post("/predict")
 def predict(passenger: Passenger):

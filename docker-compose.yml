@@ -1,18 +1,25 @@
 version: "3.8"
+
 services:
-  api:
+  titanic-api:
     build: .
+    container_name: titanic-api
     ports:
       - "8000:8000"
-    depends_on:
-      - mlflow
-  mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.14.0
-    ports:
-      - "5000:5000"
-    command: >
-      mlflow server --host 0.0.0.0 --port 5000
-      --backend-store-uri sqlite:///mlflow.db
-      --default-artifact-root /mlruns
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
     volumes:
-      - ./mlruns:/mlruns
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
