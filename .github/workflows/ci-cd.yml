@@ -54,3 +54,22 @@ jobs:
       - name: Push Docker image
         run: |
           docker push ghcr.io/${{ env.REPO_LC }}/titanic-api:latest
+
+
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to remote VM
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ghcr.io/${{ github.repository }}/titanic-api:latest
+            docker stop titanic-api || true
+            docker rm titanic-api || true
+            docker run -d --name titanic-api -p 8000:8000 ghcr.io/${{ github.repository }}/titanic-api:latest
